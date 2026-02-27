@@ -383,7 +383,8 @@ class VastGPUManager:
         Search for available GPU offers.
 
         Args:
-            gpu_name: Exact GPU model name (e.g., "RTX_3090", "RTX_4090", "A100").
+            gpu_name: GPU model search term (e.g., "3090", "RTX_3090", "A100").
+                Partial match: "3090" matches "RTX 3090", "RTX 3090 Ti", etc.
                 If None and use_defaults=False, no GPU filter is applied.
             gpu_family: GPU family prefix (e.g., "RTX", "GTX", "Tesla", "A100").
                 Filters GPUs that start with this prefix (case-insensitive).
@@ -433,12 +434,8 @@ class VastGPUManager:
         if min_reliability and min_reliability > 0:
             query_parts.append(f"reliability>={min_reliability}")
 
-        # Only add GPU name filter if specified
-        if gpu_name:
-            query_parts.append(f"gpu_name={gpu_name}")
-
-        # Note: gpu_ram and cpu_ram filters are applied locally after API call
-        # because the vast.ai API doesn't support these filters in the query
+        # Note: gpu_name, gpu_ram and cpu_ram filters are applied locally after API call
+        # gpu_name uses partial match (contains) for flexible searching
 
         # Only add price filter if specified
         if max_price is not None:
@@ -450,6 +447,13 @@ class VastGPUManager:
         result = self.sdk.search_offers(query=query)
 
         if isinstance(result, list):
+            # Filter by GPU name (partial match / contains)
+            if gpu_name:
+                gpu_name_upper = gpu_name.upper().replace("_", " ")
+                result = [
+                    r for r in result if gpu_name_upper in r.get("gpu_name", "").upper()
+                ]
+
             # Filter by GPU family (prefix match)
             if gpu_family:
                 family_upper = gpu_family.upper()
