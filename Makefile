@@ -116,9 +116,9 @@ CHEAP_PRICE ?= 0.04
 
 cheap:
 ifdef PRICE
-	$(PYTHON) cli.py search --max-price $(PRICE) --order-by price_power
+	$(PYTHON) cli.py search --max-price $(PRICE) --order-by price_power $(if $(VRAM),--min-gpu-ram $(VRAM))
 else
-	$(PYTHON) cli.py search --max-price $(CHEAP_PRICE) --order-by price_power
+	$(PYTHON) cli.py search --max-price $(CHEAP_PRICE) --order-by price_power $(if $(VRAM),--min-gpu-ram $(VRAM))
 endif
 
 list:
